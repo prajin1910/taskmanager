@@ -60,15 +60,24 @@ import { LoginRequest, RegisterRequest, VerifyEmailRequest } from '../../models/
 
                 <div class="form-group">
                   <label for="loginPassword">Password</label>
-                  <input
-                    type="password"
-                    id="loginPassword"
-                    class="form-control"
-                    [(ngModel)]="loginData.password"
-                    name="password"
-                    required
-                    placeholder="Enter your password"
-                  />
+                  <div class="password-input-container">
+                    <input
+                      [type]="showLoginPassword ? 'text' : 'password'"
+                      id="loginPassword"
+                      class="form-control password-input"
+                      [(ngModel)]="loginData.password"
+                      name="password"
+                      required
+                      placeholder="Enter your password"
+                    />
+                    <button
+                      type="button"
+                      class="password-toggle-btn"
+                      (click)="showLoginPassword = !showLoginPassword"
+                    >
+                      <span class="password-icon">{{ showLoginPassword ? '🙈' : '👁️' }}</span>
+                    </button>
+                  </div>
                 </div>
 
                 <div *ngIf="errorMessage" class="error-message">
@@ -119,16 +128,25 @@ import { LoginRequest, RegisterRequest, VerifyEmailRequest } from '../../models/
 
                 <div class="form-group">
               <label for="registerPassword">Password</label>
-              <input
-              type="password"
-              id="registerPassword"
-              class="form-control"
-              [(ngModel)]="registerData.password"
-              name="password"
-              required
-              placeholder="Create a password"
-              (input)="validatePassword()"
-              />
+              <div class="password-input-container">
+                <input
+                  [type]="showRegisterPassword ? 'text' : 'password'"
+                  id="registerPassword"
+                  class="form-control password-input"
+                  [(ngModel)]="registerData.password"
+                  name="password"
+                  required
+                  placeholder="Create a password"
+                  (input)="validatePassword()"
+                />
+                <button
+                  type="button"
+                  class="password-toggle-btn"
+                  (click)="showRegisterPassword = !showRegisterPassword"
+                >
+                  <span class="password-icon">{{ showRegisterPassword ? '🙈' : '👁️' }}</span>
+                </button>
+              </div>
               <div class="password-requirements" *ngIf="!isPasswordValid && registerData.password">
               <small class="password-hint text-danger">
                 Password must contain at least 8 characters, 1 uppercase letter, and 1 symbol
@@ -436,6 +454,41 @@ import { LoginRequest, RegisterRequest, VerifyEmailRequest } from '../../models/
       font-size: 12px;
     }
 
+    .password-input-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .password-input {
+      padding-right: 45px !important;
+    }
+
+    .password-toggle-btn {
+      position: absolute;
+      right: 12px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      transition: background-color 0.2s ease;
+    }
+
+    .password-toggle-btn:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .password-icon {
+      font-size: 16px;
+      line-height: 1;
+    }
+
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
@@ -451,6 +504,8 @@ export class AuthComponent implements OnInit, OnDestroy {
   errorMessage = '';
   pendingEmail = '';
   resendCooldown = 0;
+  showLoginPassword = false;
+  showRegisterPassword = false;
   private resendTimer: any;
 
   loginData: LoginRequest = {
