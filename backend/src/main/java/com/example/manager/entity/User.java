@@ -50,6 +50,9 @@ public class User {
     @Column(name = "verification_code_expiry")
     private LocalDateTime verificationCodeExpiry;
 
+    @Column(name = "is_pending_verification", nullable = false)
+    private boolean isPendingVerification = false;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Task> tasks;
 
@@ -141,5 +144,13 @@ public class User {
 
     public void setVerificationCodeExpiry(LocalDateTime verificationCodeExpiry) {
         this.verificationCodeExpiry = verificationCodeExpiry;
+    }
+
+    public boolean isPendingVerification() {
+        return isPendingVerification;
+    }
+
+    public void setPendingVerification(boolean pendingVerification) {
+        isPendingVerification = pendingVerification;
     }
 }

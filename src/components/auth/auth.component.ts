@@ -350,15 +350,36 @@ import { NotificationComponent } from '../notification/notification.component';
             <div *ngIf="currentMode === 'verify'">
               <div class="auth-verification-container">
                 <div class="auth-verification-icon-container">
-                  <svg class="auth-verification-icon w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div class="auth-verification-icon-wrapper">
+                    <svg class="auth-verification-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                  </svg>
+                    </svg>
+                  </div>
                 </div>
-                <h3 class="auth-verification-title">Verify Your Email</h3>
-                <p class="auth-verification-subtitle">We've sent a 4-digit verification code to:</p>
-                <p class="auth-verification-email">{{ pendingEmail }}</p>
-                <p class="auth-verification-note">Check your inbox and enter the code below to complete your registration.</p>
-                <p class="auth-verification-sender">📨 Check your email inbox</p>
+                
+                <div class="auth-verification-content">
+                  <h3 class="auth-verification-title">Verify Your Email Address</h3>
+                  <p class="auth-verification-subtitle">We've sent a 4-digit verification code to:</p>
+                  <div class="auth-verification-email-container">
+                    <p class="auth-verification-email">{{ pendingEmail }}</p>
+                  </div>
+                  <p class="auth-verification-note">Please check your inbox and enter the verification code below to complete your registration.</p>
+                  
+                  <div class="auth-verification-steps">
+                    <div class="auth-step">
+                      <div class="auth-step-number">1</div>
+                      <div class="auth-step-text">Check your email inbox</div>
+                    </div>
+                    <div class="auth-step">
+                      <div class="auth-step-number">2</div>
+                      <div class="auth-step-text">Find the 4-digit code</div>
+                    </div>
+                    <div class="auth-step">
+                      <div class="auth-step-number">3</div>
+                      <div class="auth-step-text">Enter code below</div>
+                    </div>
+                  </div>
+                </div>
                 
                 <!-- Timer Display -->
                 <div class="auth-verification-timer">
@@ -376,18 +397,26 @@ import { NotificationComponent } from '../notification/notification.component';
               <form (ngSubmit)="onVerifyEmail()" #verifyForm="ngForm" class="auth-form">
                 <div class="auth-form-group">
                   <label for="verificationCode" class="auth-form-label">Verification Code</label>
-                  <input
-                    type="text"
-                    id="verificationCode"
-                    class="auth-verification-input"
-                    [(ngModel)]="verifyData.verificationCode"
-                    name="verificationCode"
-                    required
-                    placeholder="0000"
-                    maxlength="4"
-                    pattern="[0-9]{4}"
-                    [disabled]="isTimerExpired"
-                  />
+                  <div class="auth-verification-input-container">
+                    <input
+                      type="text"
+                      id="verificationCode"
+                      class="auth-verification-input"
+                      [(ngModel)]="verifyData.verificationCode"
+                      name="verificationCode"
+                      required
+                      placeholder="Enter 4-digit code"
+                      maxlength="4"
+                      pattern="[0-9]{4}"
+                      [disabled]="isTimerExpired"
+                      (input)="formatVerificationCode($event)"
+                    />
+                    <div class="auth-verification-input-icon">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                    </div>
+                  </div>
                 </div>
 
                 <div *ngIf="errorMessage" class="auth-error-message">
@@ -413,20 +442,36 @@ import { NotificationComponent } from '../notification/notification.component';
 
                 <div class="auth-resend-section">
                   <p class="auth-resend-text">{{ isTimerExpired ? 'Code expired?' : 'Didn\'t receive the code?' }}</p>
-                  <button
-                    type="button"
-                    class="auth-resend-button"
-                    (click)="resendCode()" 
-                    [disabled]="isResending || (resendCooldown > 0 && !isTimerExpired)"
-                  >
-                    <span *ngIf="isResending" class="auth-loading-spinner">
-                      <div class="auth-spinner"></div>
-                      Sending...
-                    </span>
-                    <span *ngIf="!isResending">
-                      {{ (resendCooldown > 0 && !isTimerExpired) ? 'Resend in ' + resendCooldown + 's' : 'Resend Code' }}
-                    </span>
-                  </button>
+                  <div class="auth-resend-actions">
+                    <button
+                      type="button"
+                      class="auth-resend-button"
+                      (click)="resendCode()" 
+                      [disabled]="isResending || (resendCooldown > 0 && !isTimerExpired)"
+                    >
+                      <svg *ngIf="!isResending" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                      </svg>
+                      <span *ngIf="isResending" class="auth-loading-spinner">
+                        <div class="auth-spinner"></div>
+                        Sending...
+                      </span>
+                      <span *ngIf="!isResending">
+                        {{ (resendCooldown > 0 && !isTimerExpired) ? 'Resend in ' + resendCooldown + 's' : 'Resend Code' }}
+                      </span>
+                    </button>
+                    
+                    <button
+                      type="button"
+                      class="auth-back-button"
+                      (click)="goBackToRegister()"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                      </svg>
+                      Back to Register
+                    </button>
+                  </div>
                 </div>
               </form>
             </div>
@@ -770,3 +815,17 @@ export class AuthComponent {
     this.stopVerificationTimer();
   }
 }
+  formatVerificationCode(event: any) {
+    // Only allow numbers
+    const value = event.target.value.replace(/[^0-9]/g, '');
+    this.verifyData.verificationCode = value;
+  }
+
+  goBackToRegister() {
+    this.showVerifyTab = false;
+    this.setMode('register');
+    this.pendingEmail = '';
+    this.verifyData = { email: '', verificationCode: '' };
+    this.stopVerificationTimer();
+  }
+

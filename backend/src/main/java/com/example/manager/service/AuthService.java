@@ -12,6 +12,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.manager.dto.AuthResponse;
 import com.example.manager.dto.LoginRequest;
@@ -66,22 +67,34 @@ public class AuthService {
         return new AuthResponse(new UserResponse(user), token);
     }
 
+    @Transactional
     public AuthResponse register(RegisterRequest registerRequest) {
-        // Check if user already exists
-        if (userRepository.existsByEmail(registerRequest.getEmail())) {
-            throw new RuntimeException("Email is already taken!");
+        // Check if there's a verified user with this email
+        Optional<User> existingVerifiedUser = userRepository.findByEmail(registerRequest.getEmail());
+        if (existingVerifiedUser.isPresent() && existingVerifiedUser.get().isVerified()) {
+            throw new RuntimeException("Email is already registered and verified!");
         }
 
-        if (userRepository.existsByUsername(registerRequest.getUsername())) {
+        // Check if there's a verified user with this username
+        Optional<User> existingUsernameUser = userRepository.findByUsername(registerRequest.getUsername());
+        if (existingUsernameUser.isPresent() && existingUsernameUser.get().isVerified()) {
             throw new RuntimeException("Username is already taken!");
         }
 
-        // Create new user
+        // Clean up any existing pending verification for this email
+        Optional<User> pendingUser = userRepository.findByEmailAndIsPendingVerificationTrue(registerRequest.getEmail());
+        if (pendingUser.isPresent()) {
+            userRepository.delete(pendingUser.get());
+            System.out.println("🧹 Cleaned up previous pending verification for email: " + registerRequest.getEmail());
+        }
+
+        // Create new user with pending verification status
         User user = new User();
         user.setUsername(registerRequest.getUsername());
         user.setEmail(registerRequest.getEmail());
         user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
         user.setVerified(false);
+        user.setPendingVerification(true); // Mark as pending verification
         
         // Generate verification code
         String verificationCode = generateVerificationCode();
@@ -108,9 +121,11 @@ public class AuthService {
         return new AuthResponse(new UserResponse(savedUser), "VERIFICATION_REQUIRED");
     }
 
+    @Transactional
     public AuthResponse verifyEmail(VerifyEmailRequest verifyRequest) {
-        User user = userRepository.findByEmail(verifyRequest.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        // Find user with pending verification
+        User user = userRepository.findByEmailAndIsPendingVerificationTrue(verifyRequest.getEmail())
+                .orElseThrow(() -> new RuntimeException("No pending verification found for this email"));
 
         if (user.isVerified()) {
             throw new RuntimeException("Email is already verified");
@@ -127,6 +142,7 @@ public class AuthService {
 
         // Mark user as verified
         user.setVerified(true);
+        user.setPendingVerification(false); // Remove pending status
         user.setVerificationCode(null);
         user.setVerificationCodeExpiry(null);
         User savedUser = userRepository.save(user);
@@ -138,9 +154,11 @@ public class AuthService {
         return new AuthResponse(new UserResponse(savedUser), token);
     }
 
+    @Transactional
     public void resendVerificationCode(ResendCodeRequest resendRequest) {
-        User user = userRepository.findByEmail(resendRequest.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        // Find user with pending verification
+        User user = userRepository.findByEmailAndIsPendingVerificationTrue(resendRequest.getEmail())
+                .orElseThrow(() -> new RuntimeException("No pending verification found for this email"));
 
         if (user.isVerified()) {
             throw new RuntimeException("Email is already verified");
