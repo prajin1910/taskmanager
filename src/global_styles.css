@@ -997,6 +997,58 @@ body {
   cursor: not-allowed;
 }
 
+/* Timer Styles */
+.auth-verification-timer {
+  margin: 1.5rem 0;
+  text-align: center;
+  padding: 1rem;
+  background-color: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: var(--radius);
+}
+
+.timer-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+  margin-bottom: 0.5rem;
+}
+
+.timer-text {
+  min-width: 4rem;
+  text-align: center;
+}
+
+.timer-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Timer color states */
+.text-success-500 {
+  color: var(--success);
+}
+
+.text-warning-500 {
+  color: var(--warning);
+}
+
+.text-error-500 {
+  color: var(--error);
+}
+
+/* Expired state styling */
+.auth-verification-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: var(--bg-tertiary);
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .grid-cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1068,6 +1120,10 @@ body {
   
   .auth-password-toggle {
     right: 0.75rem;
+  }
+  
+  .timer-container {
+    font-size: 1.25rem;
   }
 }
 

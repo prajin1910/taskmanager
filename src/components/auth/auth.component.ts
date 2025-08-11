@@ -359,6 +359,18 @@ import { NotificationComponent } from '../notification/notification.component';
                 <p class="auth-verification-email">{{ pendingEmail }}</p>
                 <p class="auth-verification-note">Check your inbox and enter the code below to complete your registration.</p>
                 <p class="auth-verification-sender">📨 Check your email inbox</p>
+                
+                <!-- Timer Display -->
+                <div class="auth-verification-timer">
+                  <div class="timer-container" [class]="getTimerColor()">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span class="timer-text">{{ getFormattedTime() }}</span>
+                  </div>
+                  <p class="timer-label" *ngIf="!isTimerExpired">Code expires in</p>
+                  <p class="timer-label text-error-500" *ngIf="isTimerExpired">⚠️ Code expired</p>
+                </div>
               </div>
 
               <form (ngSubmit)="onVerifyEmail()" #verifyForm="ngForm" class="auth-form">
@@ -374,6 +386,7 @@ import { NotificationComponent } from '../notification/notification.component';
                     placeholder="0000"
                     maxlength="4"
                     pattern="[0-9]{4}"
+                    [disabled]="isTimerExpired"
                   />
                 </div>
 
@@ -389,7 +402,7 @@ import { NotificationComponent } from '../notification/notification.component';
                 <button
                   type="submit"
                   class="auth-submit-button"
-                  [disabled]="!verifyForm.valid || isLoading"
+                  [disabled]="!verifyForm.valid || isLoading || isTimerExpired"
                 >
                   <span *ngIf="isLoading" class="auth-loading-spinner">
                     <div class="auth-spinner"></div>
@@ -399,19 +412,19 @@ import { NotificationComponent } from '../notification/notification.component';
                 </button>
 
                 <div class="auth-resend-section">
-                  <p class="auth-resend-text">Didn't receive the code?</p>
+                  <p class="auth-resend-text">{{ isTimerExpired ? 'Code expired?' : 'Didn\'t receive the code?' }}</p>
                   <button
                     type="button"
                     class="auth-resend-button"
-                    (click)="resendCode()"
-                    [disabled]="isResending || resendCooldown > 0"
+                    (click)="resendCode()" 
+                    [disabled]="isResending || (resendCooldown > 0 && !isTimerExpired)"
                   >
                     <span *ngIf="isResending" class="auth-loading-spinner">
                       <div class="auth-spinner"></div>
                       Sending...
                     </span>
                     <span *ngIf="!isResending">
-                      {{ resendCooldown > 0 ? 'Resend in ' + resendCooldown + 's' : 'Resend Code' }}
+                      {{ (resendCooldown > 0 && !isTimerExpired) ? 'Resend in ' + resendCooldown + 's' : 'Resend Code' }}
                     </span>
                   </button>
                 </div>
@@ -435,6 +448,11 @@ export class AuthComponent {
   isPasswordValid = true;
   showLoginPassword = false;
   showRegisterPassword = false;
+  
+  // Timer properties for verification code
+  verificationTimer = 600; // 10 minutes in seconds
+  verificationTimerInterval: any;
+  isTimerExpired = false;
 
   loginData: LoginRequest = {
     email: '',
@@ -478,6 +496,13 @@ export class AuthComponent {
     this.errorMessage = '';
     this.validationErrors = {};
     this.clearForm();
+    
+    // Start timer when switching to verify mode
+    if (mode === 'verify') {
+      this.startVerificationTimer();
+    } else {
+      this.stopVerificationTimer();
+    }
   }
 
   clearForm() {
@@ -620,6 +645,7 @@ export class AuthComponent {
         this.verifyData.email = this.registerData.email;
         this.showVerifyTab = true;
         this.setMode('verify');
+        this.startVerificationTimer();
       },
       error: (error) => {
         this.isLoading = false;
@@ -659,7 +685,51 @@ export class AuthComponent {
     });
   }
 
+  startVerificationTimer() {
+    this.verificationTimer = 600; // Reset to 10 minutes
+    this.isTimerExpired = false;
+    
+    // Clear any existing timer
+    if (this.verificationTimerInterval) {
+      clearInterval(this.verificationTimerInterval);
+    }
+    
+    this.verificationTimerInterval = setInterval(() => {
+      this.verificationTimer--;
+      
+      if (this.verificationTimer <= 0) {
+        this.isTimerExpired = true;
+        this.stopVerificationTimer();
+        this.errorMessage = 'Verification code has expired. Please request a new code.';
+      }
+    }, 1000);
+  }
+
+  stopVerificationTimer() {
+    if (this.verificationTimerInterval) {
+      clearInterval(this.verificationTimerInterval);
+      this.verificationTimerInterval = null;
+    }
+  }
+
+  getFormattedTime(): string {
+    const minutes = Math.floor(this.verificationTimer / 60);
+    const seconds = this.verificationTimer % 60;
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  }
+
+  getTimerColor(): string {
+    if (this.verificationTimer <= 60) return 'text-error-500'; // Red for last minute
+    if (this.verificationTimer <= 180) return 'text-warning-500'; // Orange for last 3 minutes
+    return 'text-success-500'; // Green for normal time
+  }
+
   resendCode() {
+    // Reset timer when resending code
+    this.startVerificationTimer();
+    this.isTimerExpired = false;
+    this.errorMessage = '';
+    
     this.isResending = true;
     
     const resendData: ResendCodeRequest = {
@@ -693,5 +763,10 @@ export class AuthComponent {
         });
       }
     });
+  }
+
+  ngOnDestroy() {
+    // Clean up timer when component is destroyed
+    this.stopVerificationTimer();
   }
 }
