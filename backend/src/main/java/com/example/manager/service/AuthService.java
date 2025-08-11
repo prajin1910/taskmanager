@@ -4,6 +4,7 @@ import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -70,8 +71,8 @@ public class AuthService {
     @Transactional
     public AuthResponse register(RegisterRequest registerRequest) {
         // Check if there's a verified user with this email
-        Optional<User> existingVerifiedUser = userRepository.findByEmail(registerRequest.getEmail());
-        if (existingVerifiedUser.isPresent() && existingVerifiedUser.get().isVerified()) {
+        Optional<User> existingUser = userRepository.findByEmail(registerRequest.getEmail());
+        if (existingUser.isPresent() && existingUser.get().isVerified()) {
             throw new RuntimeException("Email is already registered and verified!");
         }
 
@@ -81,11 +82,16 @@ public class AuthService {
             throw new RuntimeException("Username is already taken!");
         }
 
-        // Clean up any existing pending verification for this email
-        Optional<User> pendingUser = userRepository.findByEmailAndIsPendingVerificationTrue(registerRequest.getEmail());
-        if (pendingUser.isPresent()) {
-            userRepository.delete(pendingUser.get());
-            System.out.println("🧹 Cleaned up previous pending verification for email: " + registerRequest.getEmail());
+        // Clean up any existing incomplete registration for this email or username
+        if (existingUser.isPresent() && !existingUser.get().isVerified()) {
+            userRepository.delete(existingUser.get());
+            System.out.println("🧹 Cleaned up incomplete registration for email: " + registerRequest.getEmail());
+        }
+        
+        // Also clean up any unverified user with the same username
+        if (existingUsernameUser.isPresent() && !existingUsernameUser.get().isVerified()) {
+            userRepository.delete(existingUsernameUser.get());
+            System.out.println("🧹 Cleaned up incomplete registration for username: " + registerRequest.getUsername());
         }
 
         // Create new user with pending verification status
@@ -123,9 +129,9 @@ public class AuthService {
 
     @Transactional
     public AuthResponse verifyEmail(VerifyEmailRequest verifyRequest) {
-        // Find user with pending verification
-        User user = userRepository.findByEmailAndIsPendingVerificationTrue(verifyRequest.getEmail())
-                .orElseThrow(() -> new RuntimeException("No pending verification found for this email"));
+        // Find user by email (whether pending or not)
+        User user = userRepository.findByEmail(verifyRequest.getEmail())
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         if (user.isVerified()) {
             throw new RuntimeException("Email is already verified");
@@ -137,6 +143,8 @@ public class AuthService {
         }
 
         if (user.getVerificationCodeExpiry().isBefore(LocalDateTime.now())) {
+            // Auto-cleanup expired verification
+            userRepository.delete(user);
             throw new RuntimeException("Verification code has expired");
         }
 
@@ -156,9 +164,9 @@ public class AuthService {
 
     @Transactional
     public void resendVerificationCode(ResendCodeRequest resendRequest) {
-        // Find user with pending verification
-        User user = userRepository.findByEmailAndIsPendingVerificationTrue(resendRequest.getEmail())
-                .orElseThrow(() -> new RuntimeException("No pending verification found for this email"));
+        // Find user by email
+        User user = userRepository.findByEmail(resendRequest.getEmail())
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         if (user.isVerified()) {
             throw new RuntimeException("Email is already verified");

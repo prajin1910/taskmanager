@@ -441,7 +441,7 @@ import { NotificationComponent } from '../notification/notification.component';
                 </button>
 
                 <div class="auth-resend-section">
-                  <p class="auth-resend-text">{{ isTimerExpired ? 'Code expired?' : 'Didn\'t receive the code?' }}</p>
+                  <p class="auth-resend-text">Didn't receive the code?</p>
                   <div class="auth-resend-actions">
                     <button
                       type="button"
@@ -459,17 +459,6 @@ import { NotificationComponent } from '../notification/notification.component';
                       <span *ngIf="!isResending">
                         {{ (resendCooldown > 0 && !isTimerExpired) ? 'Resend in ' + resendCooldown + 's' : 'Resend Code' }}
                       </span>
-                    </button>
-                    
-                    <button
-                      type="button"
-                      class="auth-back-button"
-                      (click)="goBackToRegister()"
-                    >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                      </svg>
-                      Back to Register
                     </button>
                   </div>
                 </div>
@@ -720,12 +709,26 @@ export class AuthComponent {
       },
       error: (error) => {
         this.isLoading = false;
-        this.errorMessage = error.error?.message || 'Verification failed. Please try again.';
-        this.notificationService.addNotification({
-          title: 'Verification Failed',
-          message: this.errorMessage,
-          type: 'error'
-        });
+        const errorMsg = error.error?.message || 'Verification failed. Please try again.';
+        this.errorMessage = errorMsg;
+        
+        // If verification expired, redirect back to register
+        if (errorMsg.includes('expired')) {
+          this.notificationService.addNotification({
+            title: 'Verification Expired',
+            message: 'Your verification code has expired. Please register again.',
+            type: 'warning'
+          });
+          setTimeout(() => {
+            this.goBackToRegister();
+          }, 2000);
+        } else {
+          this.notificationService.addNotification({
+            title: 'Verification Failed',
+            message: errorMsg,
+            type: 'error'
+          });
+        }
       }
     });
   }
@@ -801,11 +804,21 @@ export class AuthComponent {
       },
       error: (error) => {
         this.isResending = false;
-        this.notificationService.addNotification({
-          title: 'Resend Failed',
-          message: error.error?.message || 'Failed to resend verification code.',
-          type: 'error'
-        });
+        // If user not found, redirect back to register
+        if (error.error?.message?.includes('User not found')) {
+          this.notificationService.addNotification({
+            title: 'Registration Expired',
+            message: 'Your registration has expired. Please register again.',
+            type: 'warning'
+          });
+          this.goBackToRegister();
+        } else {
+          this.notificationService.addNotification({
+            title: 'Resend Failed',
+            message: error.error?.message || 'Failed to resend verification code.',
+            type: 'error'
+          });
+        }
       }
     });
   }
