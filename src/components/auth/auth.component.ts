@@ -814,7 +814,7 @@ export class AuthComponent {
     // Clean up timer when component is destroyed
     this.stopVerificationTimer();
   }
-}
+
   formatVerificationCode(event: any) {
     // Only allow numbers
     const value = event.target.value.replace(/[^0-9]/g, '');
@@ -828,4 +828,4 @@ export class AuthComponent {
     this.verifyData = { email: '', verificationCode: '' };
     this.stopVerificationTimer();
   }
-
+}
