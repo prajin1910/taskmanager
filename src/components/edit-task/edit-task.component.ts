@@ -67,15 +67,17 @@ import { NotificationComponent } from '../notification/notification.component';
                     id="title"
                     name="title"
                     class="form-input"
+                    [class.error]="hasFieldError('title')"
                     [(ngModel)]="taskData.title"
                     #title="ngModel"
                     required
                     maxlength="200"
                     placeholder="Enter a clear, descriptive title for your task"
                   />
-                  <div *ngIf="title.invalid && title.touched" class="form-error">
-                    <span *ngIf="title.errors?.['required']">Task title is required</span>
-                    <span *ngIf="title.errors?.['maxlength']">Title must be less than 200 characters</span>
+                  <div *ngIf="hasFieldError('title')" class="form-error-messages">
+                    <div *ngFor="let error of getFieldErrors('title')" class="form-error">
+                      {{ error }}
+                    </div>
                   </div>
                 </div>
 
@@ -85,6 +87,7 @@ import { NotificationComponent } from '../notification/notification.component';
                     id="description"
                     name="description"
                     class="form-textarea"
+                    [class.error]="hasFieldError('description')"
                     [(ngModel)]="taskData.description"
                     #description="ngModel"
                     required
@@ -92,9 +95,10 @@ import { NotificationComponent } from '../notification/notification.component';
                     rows="4"
                     placeholder="Provide detailed information about what needs to be accomplished"
                   ></textarea>
-                  <div *ngIf="description.invalid && description.touched" class="form-error">
-                    <span *ngIf="description.errors?.['required']">Description is required</span>
-                    <span *ngIf="description.errors?.['maxlength']">Description must be less than 1000 characters</span>
+                  <div *ngIf="hasFieldError('description')" class="form-error-messages">
+                    <div *ngFor="let error of getFieldErrors('description')" class="form-error">
+                      {{ error }}
+                    </div>
                   </div>
                 </div>
 
@@ -120,9 +124,15 @@ import { NotificationComponent } from '../notification/notification.component';
                       id="dueDate"
                       name="dueDate"
                       class="form-input"
+                      [class.error]="hasFieldError('dueDate')"
                       [(ngModel)]="taskData.dueDate"
                       [min]="minDate"
                     />
+                    <div *ngIf="hasFieldError('dueDate')" class="form-error-messages">
+                      <div *ngFor="let error of getFieldErrors('dueDate')" class="form-error">
+                        {{ error }}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -133,7 +143,7 @@ import { NotificationComponent } from '../notification/notification.component';
                       type="button"
                       class="btn btn-primary"
                       (click)="generateRoadmap()"
-                      [disabled]="!taskData.title || !taskData.description || isGeneratingRoadmap"
+                      [disabled]="isGeneratingRoadmap"
                     >
                       <span *ngIf="isGeneratingRoadmap" class="spinner"></span>
                       {{ isGeneratingRoadmap ? 'Generating...' : 'Generate Roadmap' }}
@@ -186,7 +196,7 @@ import { NotificationComponent } from '../notification/notification.component';
                   <button
                     type="submit"
                     class="btn btn-primary"
-                    [disabled]="!taskForm.valid || isLoading"
+                    [disabled]="isLoading"
                   >
                     <span *ngIf="isLoading" class="spinner"></span>
                     {{ isLoading ? 'Updating...' : 'Update Task' }}
@@ -220,6 +230,9 @@ export class EditTaskComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
   minDate = '';
+  
+  // Validation state
+  validationErrors: { [key: string]: string[] } = {};
 
   constructor(
     private authService: AuthService,
@@ -240,6 +253,45 @@ export class EditTaskComponent implements OnInit {
     const now = new Date();
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
     this.minDate = now.toISOString().slice(0, 16);
+  }
+
+  validateTaskForm(): boolean {
+    this.validationErrors = {};
+    
+    if (!this.taskData?.title?.trim()) {
+      this.validationErrors['title'] = ['Task title is required'];
+    } else if (this.taskData.title.trim().length < 3) {
+      this.validationErrors['title'] = ['Title must be at least 3 characters long'];
+    } else if (this.taskData.title.length > 200) {
+      this.validationErrors['title'] = ['Title must be less than 200 characters'];
+    }
+
+    if (!this.taskData?.description?.trim()) {
+      this.validationErrors['description'] = ['Task description is required'];
+    } else if (this.taskData.description.trim().length < 10) {
+      this.validationErrors['description'] = ['Description must be at least 10 characters long'];
+    } else if (this.taskData.description.length > 1000) {
+      this.validationErrors['description'] = ['Description must be less than 1000 characters'];
+    }
+
+    // Validate due date if provided
+    if (this.taskData?.dueDate) {
+      const dueDate = new Date(this.taskData.dueDate);
+      const now = new Date();
+      if (dueDate <= now) {
+        this.validationErrors['dueDate'] = ['Due date must be in the future'];
+      }
+    }
+
+    return Object.keys(this.validationErrors).length === 0;
+  }
+
+  hasFieldError(fieldName: string): boolean {
+    return this.validationErrors[fieldName] && this.validationErrors[fieldName].length > 0;
+  }
+
+  getFieldErrors(fieldName: string): string[] {
+    return this.validationErrors[fieldName] || [];
   }
 
   loadTask() {
@@ -269,8 +321,8 @@ export class EditTaskComponent implements OnInit {
   }
 
   generateRoadmap() {
-    if (!this.taskData?.title || !this.taskData?.description) {
-      this.errorMessage = 'Please fill in both title and description before generating a roadmap.';
+    if (!this.validateTaskForm()) {
+      this.errorMessage = 'Please fix the form errors before generating a roadmap.';
       return;
     }
 
@@ -278,9 +330,9 @@ export class EditTaskComponent implements OnInit {
     this.errorMessage = '';
 
     this.aiRoadmapService.generateRoadmap({ 
-      title: this.taskData.title!, 
-      description: this.taskData.description!, 
-      priority: this.taskData.priority! 
+      title: this.taskData!.title!, 
+      description: this.taskData!.description!, 
+      priority: this.taskData!.priority! 
     }).subscribe({
       next: (response) => {
         if (this.taskData) {
@@ -308,7 +360,12 @@ export class EditTaskComponent implements OnInit {
   }
 
   onSubmit(form: NgForm) {
-    if (form.valid && this.taskData) {
+    if (!this.validateTaskForm()) {
+      this.errorMessage = 'Please fix all validation errors before submitting.';
+      return;
+    }
+
+    if (this.taskData) {
       this.isLoading = true;
       this.errorMessage = '';
 

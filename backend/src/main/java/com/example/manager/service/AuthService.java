@@ -1,14 +1,10 @@
 package com.example.manager.service;
 
-import com.example.manager.dto.AuthResponse;
-import com.example.manager.dto.LoginRequest;
-import com.example.manager.dto.RegisterRequest;
-import com.example.manager.dto.VerifyEmailRequest;
-import com.example.manager.dto.ResendCodeRequest;
-import com.example.manager.dto.UserResponse;
-import com.example.manager.entity.User;
-import com.example.manager.repository.UserRepository;
-import com.example.manager.security.JwtTokenUtil;
+import java.security.SecureRandom;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -17,10 +13,15 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.security.SecureRandom;
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
+import com.example.manager.dto.AuthResponse;
+import com.example.manager.dto.LoginRequest;
+import com.example.manager.dto.RegisterRequest;
+import com.example.manager.dto.ResendCodeRequest;
+import com.example.manager.dto.UserResponse;
+import com.example.manager.dto.VerifyEmailRequest;
+import com.example.manager.entity.User;
+import com.example.manager.repository.UserRepository;
+import com.example.manager.security.JwtTokenUtil;
 
 @Service
 public class AuthService {
@@ -48,7 +49,7 @@ public class AuthService {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
         } catch (BadCredentialsException e) {
-            throw new BadCredentialsException("Invalid credentials", e);
+            throw new BadCredentialsException("Invalid Username or Password", e);
         }
 
         final UserDetails userDetails = userDetailsService.loadUserByUsername(loginRequest.getEmail());

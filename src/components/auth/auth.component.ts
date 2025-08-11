@@ -72,11 +72,17 @@ import { NotificationComponent } from '../notification/notification.component';
                       type="email"
                       id="loginEmail"
                       class="auth-form-input"
+                      [class.error]="hasFieldError('email')"
                       [(ngModel)]="loginData.email"
                       name="email"
                       required
                       placeholder="Enter your email"
                     />
+                  </div>
+                  <div *ngIf="hasFieldError('email')" class="auth-field-errors">
+                    <div *ngFor="let error of getFieldErrors('email')" class="auth-error-text">
+                      {{ error }}
+                    </div>
                   </div>
                 </div>
 
@@ -92,6 +98,7 @@ import { NotificationComponent } from '../notification/notification.component';
                       [type]="showLoginPassword ? 'text' : 'password'"
                       id="loginPassword"
                       class="auth-form-input"
+                      [class.error]="hasFieldError('password')"
                       [(ngModel)]="loginData.password"
                       name="password"
                       required
@@ -111,6 +118,11 @@ import { NotificationComponent } from '../notification/notification.component';
                       </svg>
                     </button>
                   </div>
+                  <div *ngIf="hasFieldError('password')" class="auth-field-errors">
+                    <div *ngFor="let error of getFieldErrors('password')" class="auth-error-text">
+                      {{ error }}
+                    </div>
+                  </div>
                 </div>
 
                 <div *ngIf="errorMessage" class="auth-error-message">
@@ -125,7 +137,7 @@ import { NotificationComponent } from '../notification/notification.component';
                 <button
                   type="submit"
                   class="auth-submit-button"
-                  [disabled]="!loginForm.valid || isLoading"
+                  [disabled]="isLoading"
                 >
                   <span *ngIf="isLoading" class="auth-loading-spinner">
                     <div class="auth-spinner"></div>
@@ -156,11 +168,17 @@ import { NotificationComponent } from '../notification/notification.component';
                       type="text"
                       id="registerUsername"
                       class="auth-form-input"
+                      [class.error]="hasFieldError('username')"
                       [(ngModel)]="registerData.username"
                       name="username"
                       required
                       placeholder="Choose a username"
                     />
+                  </div>
+                  <div *ngIf="hasFieldError('username')" class="auth-field-errors">
+                    <div *ngFor="let error of getFieldErrors('username')" class="auth-error-text">
+                      {{ error }}
+                    </div>
                   </div>
                 </div>
 
@@ -176,11 +194,17 @@ import { NotificationComponent } from '../notification/notification.component';
                       type="email"
                       id="registerEmail"
                       class="auth-form-input"
+                      [class.error]="hasFieldError('email')"
                       [(ngModel)]="registerData.email"
                       name="email"
                       required
                       placeholder="Enter your email"
                     />
+                  </div>
+                  <div *ngIf="hasFieldError('email')" class="auth-field-errors">
+                    <div *ngFor="let error of getFieldErrors('email')" class="auth-error-text">
+                      {{ error }}
+                    </div>
                   </div>
                 </div>
 
@@ -196,6 +220,7 @@ import { NotificationComponent } from '../notification/notification.component';
                       [type]="showRegisterPassword ? 'text' : 'password'"
                       id="registerPassword"
                       class="auth-form-input"
+                      [class.error]="hasFieldError('password')"
                       [(ngModel)]="registerData.password"
                       name="password"
                       required
@@ -215,6 +240,11 @@ import { NotificationComponent } from '../notification/notification.component';
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"></path>
                       </svg>
                     </button>
+                  </div>
+                  <div *ngIf="hasFieldError('password')" class="auth-field-errors">
+                    <div *ngFor="let error of getFieldErrors('password')" class="auth-error-text">
+                      {{ error }}
+                    </div>
                   </div>
                   
                   <!-- Password Requirements -->
@@ -254,6 +284,45 @@ import { NotificationComponent } from '../notification/notification.component';
                   </div>
                 </div>
 
+                <div class="auth-form-group">
+                  <label for="confirmPassword" class="auth-form-label">Confirm Password</label>
+                  <div class="auth-input-container">
+                    <div class="auth-input-icon">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                    </div>
+                    <input
+                      [type]="showConfirmPassword ? 'text' : 'password'"
+                      id="confirmPassword"
+                      class="auth-form-input"
+                      [class.error]="hasFieldError('confirmPassword')"
+                      [(ngModel)]="confirmPassword"
+                      name="confirmPassword"
+                      required
+                      placeholder="Confirm your password"
+                    />
+                    <button
+                      type="button"
+                      class="auth-password-toggle"
+                      (click)="toggleConfirmPasswordVisibility()"
+                    >
+                      <svg *ngIf="!showConfirmPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                      </svg>
+                      <svg *ngIf="showConfirmPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"></path>
+                      </svg>
+                    </button>
+                  </div>
+                  <div *ngIf="hasFieldError('confirmPassword')" class="auth-field-errors">
+                    <div *ngFor="let error of getFieldErrors('confirmPassword')" class="auth-error-text">
+                      {{ error }}
+                    </div>
+                  </div>
+                </div>
+
                 <div *ngIf="errorMessage" class="auth-error-message">
                   <div class="auth-error-icon">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -266,7 +335,7 @@ import { NotificationComponent } from '../notification/notification.component';
                 <button
                   type="submit"
                   class="auth-submit-button"
-                  [disabled]="!registerForm.valid || !isPasswordValid || isLoading"
+                  [disabled]="isLoading"
                 >
                   <span *ngIf="isLoading" class="auth-loading-spinner">
                     <div class="auth-spinner"></div>
@@ -378,6 +447,13 @@ export class AuthComponent {
     password: ''
   };
 
+  confirmPassword = '';
+  showConfirmPassword = false;
+  
+  // Validation state
+  validationErrors: { [key: string]: string[] } = {};
+  isFormValid = false;
+
   verifyData: VerifyEmailRequest = {
     email: '',
     verificationCode: ''
@@ -400,6 +476,81 @@ export class AuthComponent {
   setMode(mode: 'login' | 'register' | 'verify') {
     this.currentMode = mode;
     this.errorMessage = '';
+    this.validationErrors = {};
+    this.clearForm();
+  }
+
+  clearForm() {
+    if (this.currentMode === 'login') {
+      this.loginData = { email: '', password: '' };
+    } else if (this.currentMode === 'register') {
+      this.registerData = { username: '', email: '', password: '' };
+      this.confirmPassword = '';
+    }
+    this.validationErrors = {};
+  }
+
+  validateEmail(email: string): boolean {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  }
+
+  validateUsername(username: string): boolean {
+    return username.length >= 3 && username.length <= 20 && /^[a-zA-Z0-9_]+$/.test(username);
+  }
+
+  validateLoginForm(): boolean {
+    this.validationErrors = {};
+    
+    if (!this.loginData.email.trim()) {
+      this.validationErrors['email'] = ['Email is required'];
+    } else if (!this.validateEmail(this.loginData.email)) {
+      this.validationErrors['email'] = ['Please enter a valid email address'];
+    }
+
+    if (!this.loginData.password.trim()) {
+      this.validationErrors['password'] = ['Password is required'];
+    }
+
+    return Object.keys(this.validationErrors).length === 0;
+  }
+
+  validateRegisterForm(): boolean {
+    this.validationErrors = {};
+    
+    if (!this.registerData.username.trim()) {
+      this.validationErrors['username'] = ['Username is required'];
+    } else if (!this.validateUsername(this.registerData.username)) {
+      this.validationErrors['username'] = ['Username must be 3-20 characters and contain only letters, numbers, and underscores'];
+    }
+
+    if (!this.registerData.email.trim()) {
+      this.validationErrors['email'] = ['Email is required'];
+    } else if (!this.validateEmail(this.registerData.email)) {
+      this.validationErrors['email'] = ['Please enter a valid email address'];
+    }
+
+    if (!this.registerData.password.trim()) {
+      this.validationErrors['password'] = ['Password is required'];
+    } else if (!this.isPasswordValid) {
+      this.validationErrors['password'] = ['Password must meet all requirements'];
+    }
+
+    if (!this.confirmPassword.trim()) {
+      this.validationErrors['confirmPassword'] = ['Please confirm your password'];
+    } else if (this.registerData.password && this.confirmPassword && this.registerData.password !== this.confirmPassword) {
+      this.validationErrors['confirmPassword'] = ['Passwords do not match'];
+    }
+
+    return Object.keys(this.validationErrors).length === 0;
+  }
+
+  hasFieldError(fieldName: string): boolean {
+    return this.validationErrors[fieldName] && this.validationErrors[fieldName].length > 0;
+  }
+
+  getFieldErrors(fieldName: string): string[] {
+    return this.validationErrors[fieldName] || [];
   }
 
   toggleLoginPasswordVisibility() {
@@ -410,11 +561,19 @@ export class AuthComponent {
     this.showRegisterPassword = !this.showRegisterPassword;
   }
 
+  toggleConfirmPasswordVisibility() {
+    this.showConfirmPassword = !this.showConfirmPassword;
+  }
+
   validatePassword() {
     this.isPasswordValid = this.authService.validatePassword(this.registerData.password);
   }
 
   onLogin() {
+    if (!this.validateLoginForm()) {
+      return;
+    }
+
     this.isLoading = true;
     this.errorMessage = '';
 
@@ -441,14 +600,12 @@ export class AuthComponent {
   }
 
   onRegister() {
-    this.isLoading = true;
-    this.errorMessage = '';
-    
-    if (!this.isPasswordValid) {
-      this.errorMessage = 'Please ensure password meets requirements';
-      this.isLoading = false;
+    if (!this.validateRegisterForm()) {
       return;
     }
+
+    this.isLoading = true;
+    this.errorMessage = '';
 
     this.authService.register(this.registerData).subscribe({
       next: (response) => {

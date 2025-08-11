@@ -20,6 +20,7 @@ com/example/manager/service/AIRoadmapService.class
 com/example/manager/controller/AIRoadmapController$RoadmapResponse.class
 com/example/manager/service/TaskService.class
 com/example/manager/dto/AuthResponse.class
+com/example/manager/service/TaskReminderService.class
 com/example/manager/dto/ResendCodeRequest.class
 com/example/manager/entity/Task$TaskStatus.class
 com/example/manager/entity/User.class
